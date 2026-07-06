@@ -1,19 +1,28 @@
-// api/remux.js - Vercel Serverless Function
-// Receives WebM data streams and outputs structurally valid, native MP4 containers.
-
+// api/remux.js - Production Vercel Serverless Function
 const { execSync } = require('child_process');
 const fs = require('fs');
-const path = require('fs');
+const path = require('path');
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path; 
 
 export const config = {
     api: {
         bodyParser: {
-            sizeLimit: '4.5mb' // Locks request boundaries to satisfy Vercel free tier constraints
+            sizeLimit: '4.5mb'
         }
     }
 };
 
 export default async function handler(req, res) {
+    // Enable CORS to allow your local browser extension to send requests safely
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed. Use POST requests.' });
     }
@@ -24,29 +33,21 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Missing raw chunk payload parameters.' });
         }
 
-        // Convert the incoming array back into a raw file buffer
         const inputBuffer = Buffer.from(fileData);
         
-        // Define isolated workspace paths inside Vercel's temporary directory
-        const inputPath = '/tmp/input_' + Date.now() + '.webm';
-        const outputPath = '/tmp/output_' + Date.now() + '.mp4';
+        const inputPath = path.join('/tmp', `input_${Date.now()}.webm`);
+        const outputPath = path.join('/tmp', `output_${Date.now()}.mp4`);
 
-        // Write the incoming WebM bytes to disk
         fs.writeFileSync(inputPath, inputBuffer);
 
-        // STITCH FIX: Run an optimized, fast container remuxing command.
-        // '-c copy' copies the original perfect audio/video tracks instantly without re-encoding, 
-        // while rewriting the container into an authentic, native MP4.
-        execSync(`ffmpeg -i ${inputPath} -c copy -movflags faststart ${outputPath}`);
+        // Executes the track alignment pass to output an authentic MP4 container block
+        execSync(`"${ffmpegPath}" -i ${inputPath} -c copy -movflags faststart ${outputPath}`);
 
-        // Read the newly constructed, non-corrupt MP4 bytes
         const outputBuffer = fs.readFileSync(outputPath);
 
-        // Clean up temporary server files immediately
         fs.unlinkSync(inputPath);
         fs.unlinkSync(outputPath);
 
-        // Stream the perfect MP4 file binary straight back to the extension
         res.setHeader('Content-Type', 'video/mp4');
         res.setHeader('Content-Disposition', 'attachment; filename=video.mp4');
         return res.status(200).send(outputBuffer);
