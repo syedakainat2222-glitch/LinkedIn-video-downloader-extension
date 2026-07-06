@@ -5,8 +5,5 @@
       "memory": 1024,
       "maxDuration": 10
     }
-  },
-  "plugins": [
-    "vercel-ffmpeg-plugin"
-  ]
+  }
 }
