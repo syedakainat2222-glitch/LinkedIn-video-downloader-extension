@@ -1,0 +1,12 @@
+{
+  "name": "linkedin-video-downloader-backend",
+  "version": "1.0.0",
+  "description": "High-performance video track alignment engine container",
+  "main": "api/remux.js",
+  "engines": {
+    "node": "18.x"
+  },
+  "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0"
+  }
+}
