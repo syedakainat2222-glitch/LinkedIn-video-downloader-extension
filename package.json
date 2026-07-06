@@ -4,7 +4,7 @@
   "description": "High-performance video track alignment engine container",
   "main": "api/remux.js",
   "engines": {
-    "node": "18.x"
+    "node": "24.x"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0"
