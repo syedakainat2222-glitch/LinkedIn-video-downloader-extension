@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "functions": {
+    "api/remux.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
+  "plugins": [
+    "vercel-ffmpeg-plugin"
+  ]
+}
